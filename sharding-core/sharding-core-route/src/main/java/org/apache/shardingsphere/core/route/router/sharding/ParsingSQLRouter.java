@@ -32,7 +32,6 @@ import org.apache.shardingsphere.core.parse.entry.ShardingSQLParseEntry;
 import org.apache.shardingsphere.core.parse.hook.ParsingHook;
 import org.apache.shardingsphere.core.parse.hook.SPIParsingHook;
 import org.apache.shardingsphere.core.parse.sql.statement.SQLStatement;
-import org.apache.shardingsphere.core.parse.sql.statement.dml.InsertStatement;
 import org.apache.shardingsphere.core.parse.sql.statement.dml.SelectStatement;
 import org.apache.shardingsphere.core.route.SQLRouteResult;
 import org.apache.shardingsphere.core.route.type.RoutingResult;
@@ -41,7 +40,7 @@ import org.apache.shardingsphere.core.rule.ShardingRule;
 import org.apache.shardingsphere.core.rule.TableRule;
 import org.apache.shardingsphere.core.strategy.route.value.ListRouteValue;
 import org.apache.shardingsphere.core.strategy.route.value.RouteValue;
-import org.apache.shardingsphere.spi.DbType;
+import org.apache.shardingsphere.spi.database.DatabaseType;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -61,7 +60,7 @@ public final class ParsingSQLRouter implements ShardingRouter {
     
     private final ShardingMetaData shardingMetaData;
     
-    private final DbType databaseType;
+    private final DatabaseType databaseType;
     
     private final ParsingResultCache parsingResultCache;
     
@@ -86,12 +85,10 @@ public final class ParsingSQLRouter implements ShardingRouter {
     
     @Override
     public SQLRouteResult route(final SQLStatement sqlStatement, final List<Object> parameters) {
-        Optional<GeneratedKey> generatedKey = sqlStatement instanceof InsertStatement
-                ? GeneratedKey.getGenerateKey(shardingRule, parameters, (InsertStatement) sqlStatement) : Optional.<GeneratedKey>absent();
-        SQLRouteResult result = new SQLRouteResult(sqlStatement, generatedKey.orNull());
-        OptimizeResult optimizeResult = OptimizeEngineFactory.newInstance(shardingRule, sqlStatement, parameters, generatedKey.orNull()).optimize();
+        OptimizeResult optimizeResult = OptimizeEngineFactory.newInstance(shardingRule, sqlStatement, parameters, shardingMetaData.getTable()).optimize();
+        Optional<GeneratedKey> generatedKey = optimizeResult.getGeneratedKey();
         if (generatedKey.isPresent()) {
-            setGeneratedKeys(result, generatedKey.get());
+            setGeneratedKeys(optimizeResult, generatedKey.get());
         }
         boolean needMerge = false;
         if (sqlStatement instanceof SelectStatement) {
@@ -105,15 +102,17 @@ public final class ParsingSQLRouter implements ShardingRouter {
         if (needMerge) {
             Preconditions.checkState(1 == routingResult.getRoutingUnits().size(), "Must have one sharding with subquery.");
         }
+        SQLRouteResult result = new SQLRouteResult(sqlStatement);
         result.setRoutingResult(routingResult);
         result.setOptimizeResult(optimizeResult);
         return result;
     }
     
-    private void setGeneratedKeys(final SQLRouteResult sqlRouteResult, final GeneratedKey generatedKey) {
+    private void setGeneratedKeys(final OptimizeResult optimizeResult, final GeneratedKey generatedKey) {
         generatedKeys.addAll(generatedKey.getGeneratedKeys());
-        sqlRouteResult.getGeneratedKey().getGeneratedKeys().clear();
-        sqlRouteResult.getGeneratedKey().getGeneratedKeys().addAll(generatedKeys);
+        Preconditions.checkState(optimizeResult.getGeneratedKey().isPresent());
+        optimizeResult.getGeneratedKey().get().getGeneratedKeys().clear();
+        optimizeResult.getGeneratedKey().get().getGeneratedKeys().addAll(generatedKeys);
     }
     
     private boolean isNeedMergeShardingValues(final SelectStatement selectStatement) {

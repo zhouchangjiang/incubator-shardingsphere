@@ -17,14 +17,19 @@
 
 package org.apache.shardingsphere.core.spi.database;
 
-import org.apache.shardingsphere.spi.DbType;
+import org.apache.shardingsphere.core.metadata.datasource.dialect.OracleDataSourceMetaData;
+import org.apache.shardingsphere.spi.database.DataSourceMetaData;
+import org.apache.shardingsphere.spi.database.DatabaseType;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Database type of Oracle.
  *
  * @author zhangliang
  */
-public final class OracleDatabaseType implements DbType {
+public final class OracleDatabaseType implements DatabaseType {
     
     @Override
     public String getName() {
@@ -32,7 +37,12 @@ public final class OracleDatabaseType implements DbType {
     }
     
     @Override
-    public String getProductName() {
-        return "Oracle";
+    public Collection<String> getJdbcUrlPrefixAlias() {
+        return Collections.emptyList();
+    }
+    
+    @Override
+    public DataSourceMetaData getDataSourceMetaData(final String url) {
+        return new OracleDataSourceMetaData(url);
     }
 }

@@ -25,11 +25,12 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.TokenStream;
+import org.apache.shardingsphere.core.database.DatabaseTypes;
 import org.apache.shardingsphere.core.parse.api.SQLParser;
 import org.apache.shardingsphere.core.parse.spi.SQLParserEntry;
 import org.apache.shardingsphere.core.spi.NewInstanceServiceLoader;
-import org.apache.shardingsphere.spi.BranchDatabaseType;
-import org.apache.shardingsphere.spi.DbType;
+import org.apache.shardingsphere.spi.database.BranchDatabaseType;
+import org.apache.shardingsphere.spi.database.DatabaseType;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -43,13 +44,13 @@ import java.util.HashSet;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SQLParserFactory {
     
-    private static final Collection<DbType> DATABASE_TYPES = new HashSet<>();
+    private static final Collection<DatabaseType> DATABASE_TYPES = new HashSet<>();
     
     static {
         NewInstanceServiceLoader.register(SQLParserEntry.class);
         for (SQLParserEntry each : NewInstanceServiceLoader.newServiceInstances(SQLParserEntry.class)) {
             if (!(each instanceof BranchDatabaseType)) {
-                DATABASE_TYPES.add(each.getDatabaseType());
+                DATABASE_TYPES.add(DatabaseTypes.getActualDatabaseType(each.getDatabaseType()));
             }
         }
     }
@@ -59,7 +60,7 @@ public final class SQLParserFactory {
      * 
      * @return add on database types
      */
-    public static Collection<DbType> getAddOnDatabaseTypes() {
+    public static Collection<DatabaseType> getAddOnDatabaseTypes() {
         return DATABASE_TYPES;
     }
     
@@ -70,9 +71,9 @@ public final class SQLParserFactory {
      * @param sql SQL
      * @return SQL parser
      */
-    public static SQLParser newInstance(final DbType databaseType, final String sql) {
+    public static SQLParser newInstance(final DatabaseType databaseType, final String sql) {
         for (SQLParserEntry each : NewInstanceServiceLoader.newServiceInstances(SQLParserEntry.class)) {
-            if (each.getDatabaseType().equals(databaseType)) {
+            if (DatabaseTypes.getActualDatabaseType(each.getDatabaseType()) == databaseType) {
                 return createSQLParser(sql, each);
             }
         }

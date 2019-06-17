@@ -17,9 +17,14 @@
 
 package org.apache.shardingsphere.core.spi.database;
 
-import org.apache.shardingsphere.spi.BranchDatabaseType;
-import org.apache.shardingsphere.spi.DatabaseTypes;
-import org.apache.shardingsphere.spi.DbType;
+import org.apache.shardingsphere.core.database.DatabaseTypes;
+import org.apache.shardingsphere.core.metadata.datasource.dialect.H2DataSourceMetaData;
+import org.apache.shardingsphere.spi.database.BranchDatabaseType;
+import org.apache.shardingsphere.spi.database.DataSourceMetaData;
+import org.apache.shardingsphere.spi.database.DatabaseType;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Database type of H2.
@@ -34,12 +39,17 @@ public final class H2DatabaseType implements BranchDatabaseType {
     }
     
     @Override
-    public String getProductName() {
-        return "H2";
+    public Collection<String> getJdbcUrlPrefixAlias() {
+        return Collections.emptyList();
     }
     
     @Override
-    public DbType getTrunkDatabaseType() {
+    public DataSourceMetaData getDataSourceMetaData(final String url) {
+        return new H2DataSourceMetaData(url);
+    }
+    
+    @Override
+    public DatabaseType getTrunkDatabaseType() {
         return DatabaseTypes.getActualDatabaseType("MySQL");
     }
 }

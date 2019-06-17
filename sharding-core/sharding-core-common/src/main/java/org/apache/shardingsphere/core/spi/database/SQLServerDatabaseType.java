@@ -17,14 +17,19 @@
 
 package org.apache.shardingsphere.core.spi.database;
 
-import org.apache.shardingsphere.spi.DbType;
+import org.apache.shardingsphere.core.metadata.datasource.dialect.SQLServerDataSourceMetaData;
+import org.apache.shardingsphere.spi.database.DataSourceMetaData;
+import org.apache.shardingsphere.spi.database.DatabaseType;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Database type of SQLServer.
  *
  * @author zhangliang
  */
-public final class SQLServerDatabaseType implements DbType {
+public final class SQLServerDatabaseType implements DatabaseType {
     
     @Override
     public String getName() {
@@ -32,7 +37,12 @@ public final class SQLServerDatabaseType implements DbType {
     }
     
     @Override
-    public String getProductName() {
-        return "Microsoft SQL Server";
+    public Collection<String> getJdbcUrlPrefixAlias() {
+        return Collections.singletonList("jdbc:microsoft:sqlserver:");
+    }
+    
+    @Override
+    public DataSourceMetaData getDataSourceMetaData(final String url) {
+        return new SQLServerDataSourceMetaData(url);
     }
 }

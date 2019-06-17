@@ -19,15 +19,18 @@ package org.apache.shardingsphere.core.optimize;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.apache.shardingsphere.core.metadata.table.ShardingTableMetaData;
 import org.apache.shardingsphere.core.optimize.engine.OptimizeEngine;
 import org.apache.shardingsphere.core.optimize.engine.encrypt.EncryptDefaultOptimizeEngine;
 import org.apache.shardingsphere.core.optimize.engine.encrypt.EncryptInsertOptimizeEngine;
-import org.apache.shardingsphere.core.optimize.engine.sharding.insert.InsertOptimizeEngine;
-import org.apache.shardingsphere.core.optimize.engine.sharding.query.QueryOptimizeEngine;
+import org.apache.shardingsphere.core.optimize.engine.sharding.ddl.DDLOptimizeEngine;
+import org.apache.shardingsphere.core.optimize.engine.sharding.dml.InsertOptimizeEngine;
+import org.apache.shardingsphere.core.optimize.engine.sharding.dql.QueryOptimizeEngine;
+import org.apache.shardingsphere.core.parse.sql.context.condition.Conditions;
 import org.apache.shardingsphere.core.parse.sql.statement.SQLStatement;
+import org.apache.shardingsphere.core.parse.sql.statement.ddl.DDLStatement;
 import org.apache.shardingsphere.core.parse.sql.statement.dml.DMLStatement;
 import org.apache.shardingsphere.core.parse.sql.statement.dml.InsertStatement;
-import org.apache.shardingsphere.core.parse.sql.statement.dml.SelectStatement;
 import org.apache.shardingsphere.core.rule.EncryptRule;
 import org.apache.shardingsphere.core.rule.ShardingRule;
 
@@ -44,23 +47,26 @@ import java.util.List;
 public final class OptimizeEngineFactory {
     
     /**
-     * Create optimize engine instance.
+     * Create sharding optimize engine instance.
      * 
      * @param shardingRule sharding rule
      * @param sqlStatement SQL statement
      * @param parameters parameters
-     * @param generatedKey generated key
+     * @param shardingTableMetaData sharding table metadata
      * @return optimize engine instance
      */
-    public static OptimizeEngine newInstance(final ShardingRule shardingRule, final SQLStatement sqlStatement, final List<Object> parameters, final GeneratedKey generatedKey) {
+    public static OptimizeEngine newInstance(final ShardingRule shardingRule, final SQLStatement sqlStatement, final List<Object> parameters, final ShardingTableMetaData shardingTableMetaData) {
         if (sqlStatement instanceof InsertStatement) {
-            return new InsertOptimizeEngine(shardingRule, (InsertStatement) sqlStatement, parameters, generatedKey);
+            return new InsertOptimizeEngine(shardingRule, (InsertStatement) sqlStatement, parameters);
         }
-        if (sqlStatement instanceof SelectStatement || sqlStatement instanceof DMLStatement) {
-            return new QueryOptimizeEngine(sqlStatement, parameters, sqlStatement.getShardingConditions());
+        if (sqlStatement instanceof DMLStatement) {
+            return new QueryOptimizeEngine(sqlStatement, parameters, ((DMLStatement) sqlStatement).getShardingConditions());
         }
-        // TODO do with DDL and DAL
-        return new QueryOptimizeEngine(sqlStatement, parameters, sqlStatement.getShardingConditions());
+        if (sqlStatement instanceof DDLStatement) {
+            return new DDLOptimizeEngine((DDLStatement) sqlStatement, shardingTableMetaData);
+        }
+        // TODO do with DAL
+        return new QueryOptimizeEngine(sqlStatement, parameters, new Conditions());
     }
     
     /**

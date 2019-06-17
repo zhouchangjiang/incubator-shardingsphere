@@ -21,12 +21,11 @@ import org.apache.shardingsphere.api.config.sharding.ShardingRuleConfiguration;
 import org.apache.shardingsphere.api.config.sharding.TableRuleConfiguration;
 import org.apache.shardingsphere.api.config.sharding.strategy.HintShardingStrategyConfiguration;
 import org.apache.shardingsphere.api.hint.HintManager;
-import org.apache.shardingsphere.core.parse.sql.statement.dml.DQLStatement;
+import org.apache.shardingsphere.core.database.DatabaseTypes;
 import org.apache.shardingsphere.core.parse.sql.statement.dml.SelectStatement;
 import org.apache.shardingsphere.core.route.fixture.HintShardingAlgorithmFixture;
 import org.apache.shardingsphere.core.route.router.sharding.DatabaseHintSQLRouter;
 import org.apache.shardingsphere.core.rule.ShardingRule;
-import org.apache.shardingsphere.spi.DatabaseTypes;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,7 +65,7 @@ public final class DatabaseHintSQLRouterTest {
     @Test
     public void assertRoute() {
         hintManager.addDatabaseShardingValue("", 1);
-        DQLStatement dqlStatement = new DQLStatement();
+        SelectStatement dqlStatement = new SelectStatement();
         dqlStatement.setLogicSQL("select t from tbl t");
         assertNotNull(databaseHintSQLRouter.route(dqlStatement, Collections.emptyList()));
     }

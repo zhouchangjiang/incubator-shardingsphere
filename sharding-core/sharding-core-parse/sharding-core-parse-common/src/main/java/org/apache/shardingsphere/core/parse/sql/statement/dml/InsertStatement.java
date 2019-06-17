@@ -34,25 +34,11 @@ import java.util.List;
  * @author panjuan
  */
 @Getter
+@Setter
 @ToString(callSuper = true)
 public final class InsertStatement extends DMLStatement {
     
     private final Collection<String> columnNames = new LinkedList<>();
     
     private final List<InsertValue> values = new LinkedList<>();
-    
-    @Setter
-    private boolean isNeededToAppendGeneratedKey;
-    
-    @Setter
-    private boolean isNeededToAppendAssistedColumns;
-    
-    /**
-     * Is needed to append columns.
-     * 
-     * @return append columns or not
-     */
-    public boolean isNeededToAppendColumns() {
-        return isNeededToAppendGeneratedKey || isNeededToAppendAssistedColumns;
-    }
 }

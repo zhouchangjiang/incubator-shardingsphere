@@ -17,14 +17,19 @@
 
 package org.apache.shardingsphere.core.spi.database;
 
-import org.apache.shardingsphere.spi.DbType;
+import org.apache.shardingsphere.core.metadata.datasource.dialect.PostgreSQLDataSourceMetaData;
+import org.apache.shardingsphere.spi.database.DataSourceMetaData;
+import org.apache.shardingsphere.spi.database.DatabaseType;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Database type of PostgreSQL.
  *
  * @author zhangliang
  */
-public final class PostgreSQLDatabaseType implements DbType {
+public final class PostgreSQLDatabaseType implements DatabaseType {
     
     @Override
     public String getName() {
@@ -32,7 +37,12 @@ public final class PostgreSQLDatabaseType implements DbType {
     }
     
     @Override
-    public String getProductName() {
-        return "PostgreSQL";
+    public Collection<String> getJdbcUrlPrefixAlias() {
+        return Collections.emptyList();
+    }
+    
+    @Override
+    public DataSourceMetaData getDataSourceMetaData(final String url) {
+        return new PostgreSQLDataSourceMetaData(url);
     }
 }

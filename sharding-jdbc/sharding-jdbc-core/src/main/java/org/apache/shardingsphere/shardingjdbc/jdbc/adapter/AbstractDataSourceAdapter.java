@@ -20,9 +20,9 @@ package org.apache.shardingsphere.shardingjdbc.jdbc.adapter;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.shardingsphere.core.database.DatabaseTypes;
 import org.apache.shardingsphere.shardingjdbc.jdbc.unsupported.AbstractUnsupportedOperationDataSource;
-import org.apache.shardingsphere.spi.DatabaseTypes;
-import org.apache.shardingsphere.spi.DbType;
+import org.apache.shardingsphere.spi.database.DatabaseType;
 import org.apache.shardingsphere.transaction.ShardingTransactionManagerEngine;
 
 import javax.sql.DataSource;
@@ -45,7 +45,7 @@ import java.util.logging.Logger;
 @Setter
 public abstract class AbstractDataSourceAdapter extends AbstractUnsupportedOperationDataSource implements AutoCloseable {
     
-    private final DbType databaseType;
+    private final DatabaseType databaseType;
     
     private final Map<String, DataSource> dataSourceMap;
     
@@ -59,22 +59,22 @@ public abstract class AbstractDataSourceAdapter extends AbstractUnsupportedOpera
         this.dataSourceMap = dataSourceMap;
     }
     
-    protected final DbType getDatabaseType(final Collection<DataSource> dataSources) throws SQLException {
-        DbType result = null;
+    protected final DatabaseType getDatabaseType(final Collection<DataSource> dataSources) throws SQLException {
+        DatabaseType result = null;
         for (DataSource each : dataSources) {
-            DbType databaseType = getDatabaseType(each);
+            DatabaseType databaseType = getDatabaseType(each);
             Preconditions.checkState(null == result || result == databaseType, String.format("Database type inconsistent with '%s' and '%s'", result, databaseType));
             result = databaseType;
         }
         return result;
     }
     
-    private DbType getDatabaseType(final DataSource dataSource) throws SQLException {
+    private DatabaseType getDatabaseType(final DataSource dataSource) throws SQLException {
         if (dataSource instanceof AbstractDataSourceAdapter) {
             return ((AbstractDataSourceAdapter) dataSource).databaseType;
         }
         try (Connection connection = dataSource.getConnection()) {
-            return DatabaseTypes.getActualDatabaseTypeByProductName(connection.getMetaData().getDatabaseProductName());
+            return DatabaseTypes.getDatabaseTypeByURL(connection.getMetaData().getURL());
         }
     }
     

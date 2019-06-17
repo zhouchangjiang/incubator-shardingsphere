@@ -18,6 +18,7 @@
 package org.apache.shardingsphere.dbtest.env.dataset;
 
 import com.google.common.base.Joiner;
+import org.apache.shardingsphere.core.database.DatabaseTypes;
 import org.apache.shardingsphere.core.rule.DataNode;
 import org.apache.shardingsphere.core.util.InlineExpressionParser;
 import org.apache.shardingsphere.dbtest.cases.assertion.root.SQLValue;
@@ -26,8 +27,7 @@ import org.apache.shardingsphere.dbtest.cases.dataset.DataSet;
 import org.apache.shardingsphere.dbtest.cases.dataset.metadata.DataSetColumn;
 import org.apache.shardingsphere.dbtest.cases.dataset.metadata.DataSetMetadata;
 import org.apache.shardingsphere.dbtest.cases.dataset.row.DataSetRow;
-import org.apache.shardingsphere.spi.DatabaseTypes;
-import org.apache.shardingsphere.spi.DbType;
+import org.apache.shardingsphere.spi.database.DatabaseType;
 
 import javax.sql.DataSource;
 import javax.xml.bind.JAXBContext;
@@ -82,7 +82,7 @@ public final class DataSetEnvironmentManager {
             }
             try (Connection connection = dataSourceMap.get(dataNode.getDataSourceName()).getConnection()) {
                 String insertSQL = generateInsertSQL(generateTableName(dataNode.getTableName(), 
-                        DatabaseTypes.getActualDatabaseTypeByProductName(connection.getMetaData().getDatabaseProductName())), dataSetMetadata.getColumns());
+                        DatabaseTypes.getDatabaseTypeByURL(connection.getMetaData().getURL())), dataSetMetadata.getColumns());
                 executeBatch(connection, insertSQL, sqlValueGroups);
             }
         }
@@ -140,7 +140,7 @@ public final class DataSetEnvironmentManager {
     private void clear(final String dataSourceName, final Collection<String> tableNames) throws SQLException {
         try (Connection connection = dataSourceMap.get(dataSourceName).getConnection()) {
             for (String each : tableNames) {
-                String tableName = generateTableName(each, DatabaseTypes.getActualDatabaseTypeByProductName(connection.getMetaData().getDatabaseProductName()));
+                String tableName = generateTableName(each, DatabaseTypes.getDatabaseTypeByURL(connection.getMetaData().getURL()));
                 try (PreparedStatement preparedStatement = connection.prepareStatement(String.format("TRUNCATE TABLE %s", tableName))) {
                     preparedStatement.executeUpdate();
                     // CHECKSTYLE:OFF
@@ -176,7 +176,7 @@ public final class DataSetEnvironmentManager {
         return result;
     }
     
-    private String generateTableName(final String tableName, final DbType databaseType) {
+    private String generateTableName(final String tableName, final DatabaseType databaseType) {
         switch (databaseType.getName()) {
             case "H2":
             case "PostgreSQL":
